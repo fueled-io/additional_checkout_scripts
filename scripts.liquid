@@ -1,0 +1,427 @@
+<!-- BEGIN: Fueled Supplemental Data Layer & Checkout Script Variables -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+
+  var dataLayerObjectName = "fueled"; // Provide a namespace in the data layer object.
+
+  var customerData = {};
+
+  {% if checkout.customer.id or customer.id %}
+    customerData.customerID = {{ checkout.customer.id | default: customer.id | json }};
+  {% endif %}
+  {% if checkout.email or customer.email %}
+    customerData.customerEmail = {{ checkout.email | default: customer.email | json }};
+  {% endif %}
+  {% if checkout.billing_address.first_name or customer.first_name %}
+    customerData.customerFirstName = {{ checkout.billing_address.first_name | default: customer.first_name | json }};
+  {% endif %}
+  {% if checkout.billing_address.last_name or customer.last_name %}
+    customerData.customerLastName = {{ checkout.billing_address.last_name | default: customer.last_name | json }};
+  {% endif %}
+  {% if checkout.customer.phone or checkout.billing_address.phone or checkout.shipping_address.phone or customer.phone %}
+    customerData.customerPhone = {{ checkout.customer.phone | default: checkout.billing_address.phone | default: checkout.shipping_address.phone | default: customer.phone | json }};
+  {% endif %}
+  {% if checkout.billing_address.city or customer.default_address.city %}
+    customerData.customerCity = {{ checkout.billing_address.city | default: customer.default_address.city | json }};
+  {% endif %}
+  {% if checkout.billing_address.zip or customer.default_address.zip %}
+    customerData.customerZip = {{ checkout.billing_address.zip | default: customer.default_address.zip | json }};
+  {% endif %}
+  {% if checkout.billing_address.address1 or customer.default_address.address1 %}
+    customerData.customerAddress1 = {{ checkout.billing_address.address1 | default: customer.default_address.address1 | json }};
+  {% endif %}
+  {% if checkout.billing_address.address2 or customer.default_address.address2 %}
+    customerData.customerAddress2 = {{ checkout.billing_address.address2 | default: customer.default_address.address2 | json }};
+  {% endif %}
+  {% if checkout.billing_address.country or customer.default_address.country %}
+    customerData.customerCountry = {{ checkout.billing_address.country | default: customer.default_address.country | json }};
+  {% endif %}
+  {% if checkout.billing_address.country_code or customer.default_address.country_code %}
+    customerData.customerCountryCode = {{ checkout.billing_address.country_code | default: customer.default_address.country_code | json }};
+  {% endif %}
+  {% if checkout.billing_address.province or customer.default_address.province %}
+    customerData.customerProvince = {{ checkout.billing_address.province | default: customer.default_address.province | json }};
+  {% endif %}
+  {% if checkout.billing_address.province_code or customer.default_address.province_code %}
+    customerData.customerProvinceCode = {{ checkout.billing_address.province_code | default: customer.default_address.province_code | json }};
+  {% endif %}
+  {% if checkout.customer.tags or customer.tags %}
+    customerData.customerTags = {{ checkout.customer.tags | default: customer.tags | json }};
+  {% endif %}
+  {% if customer.orders_count > 0 %}
+      customerData.total_spend = {{ customer.total_spent | divided_by: 100.0 }};
+      customerData.orders_count = {{ customer.orders_count }};
+  {% endif %}
+  {% if customer %}
+    var customerType = {% if customer.orders_count > 1 %}"returning"{% else %}"new"{% endif %};
+    customerData.customerType = customerType;
+  {% endif %}
+
+  var orderData = {
+      order_id: {% if checkout.order_id %}{{ checkout.order_id | json }}{% else %}{{ checkout.id | json }}{% endif %},
+      order_name: {% if checkout.order_name %}{{ checkout.order_name | json }}{% else %}"N/A"{% endif %},
+      affiliation: {{ shop.name | json }},
+      revenue: {{ checkout.total_price | times: 0.01 | json }},
+      currency: {{ checkout.currency | json }},
+      tax: {{ checkout.tax_price | times: 0.01 | json }},
+      shipping: {{ checkout.shipping_price | times: 0.01 | json }},
+      coupon: {% if checkout.discount_applications %}{{ checkout.discount_applications[0].title | json }}{% else %}"None"{% endif %},
+      subTotal: {% if order and order.subtotal_price %}{{ order.subtotal_price | times: 0.01 | json }}{% else %}{{ checkout.subtotal_price | times: 0.01 | json }}{% endif %},
+      productSubTotal: {{ checkout.line_items_subtotal_price | times: 0.01 | json }},
+      discountAmount: {{ checkout.total_discounts | times: 0.01 | json }}
+  };
+
+  // Function to build and return the items data array
+  function buildItemsData() {
+    var items = [];
+    {% for line_item in checkout.line_items %}
+        items.push({
+            sku: {{ line_item.sku | default: line_item.product_id | json }},
+            name: {{ line_item.product.title | json }},
+            brand: {{ line_item.vendor | json }},
+            category: {{ line_item.product.type | json }},
+            variant: {{ line_item.variant.title | json }},
+            price: {{ line_item.final_price | times: 0.01 | json }},
+            quantity: {{ line_item.quantity | json }},
+            productId: {{ line_item.product_id | json }},
+            variantId: {{ line_item.variant_id | json }},
+            image: {{ line_item.image | image_url }}
+        });
+    {% endfor %}
+    return items;
+}
+
+// Use the function to initialize itemsData
+var itemsData = buildItemsData();
+
+  window.dataLayer.push({
+    event: 'customerDataLoaded',
+    [dataLayerObjectName]: {
+      customer: customerData,
+      order: orderData,
+      orderItems: itemsData
+    }
+  });
+
+  //console.log(window.dataLayer); // Optionally test data layer in Console Log.
+</script>
+<!-- END: Fueled Supplemental Data Layer & Checkout Script Variables -->
+
+<!-- BEGIN: Add Pixel Variables here. This will conditionally enable their tracking scripts below -->
+{% assign gtmContainerId = "" %}
+{% assign grinPixelId = "" %}
+{% assign criteoPixel = "" %}
+{% assign taboolaPixelId = "" %}
+{% assign addShoppersPixel = "" %}
+{% assign pinterestPixel = "" %}
+{% assign attentiveId = "" %}
+{% assign tikTokPixelId = "" %}
+{% assign bingPixel = "" %}
+
+<!-- BEGIN: Google Tag Manager -->
+<script>
+  if(gtmContainerId) { // Check if the gtmContainerId is neither null nor empty
+      (function (w, d, s, l, i) {
+          w[l] = w[l] || [];
+          w[l].push({
+              "gtm.start": new Date().getTime(),
+              event: "gtm.js"
+          });
+          var f = d.getElementsByTagName(s)[0],
+              j = d.createElement(s),
+              dl = l != "dataLayer" ? "&l=" + l : "";
+          j.async = true;
+          j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl; // Dynamically set the GTM ID
+          f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", gtmContainerId); // Use the gtmContainerId variable here
+  }
+</script>
+<!-- END: Google Tag Manager -->
+
+<!-- BEGIN: Tracking Pixels that should only fire once for first page load -->
+{% if first_time_accessed  %}
+
+  <!-- BEGIN: Bing Ads UET Code -->
+  <script>
+    if(bingPixel) { // Check if the bingPixel is neither null nor empty
+        (function(w,d,t,r,u){
+            var f,n,i;
+            w[u]=w[u]||[],f=function(){
+                var o={ti:bingPixel, enableAutoSpaTracking: true}; // Use the bingPixel variable here.
+                o.q=w[u],w[u]=new UET(o),w[u].push("pageLoad")
+            },n=d.createElement(t),n.src=r,n.async=1,n.onload=n.onreadystatechange=function(){
+                var s=this.readyState;
+                s &&s!=="loaded"&& s!=="complete"||(f(),n.onload=n.onreadystatechange=null)
+            },i=d.getElementsByTagName(t)[0],
+            i.parentNode.insertBefore(n,i)
+        })(window,document,"script","//bat.bing.com/bat.js","uetq");
+        
+        window.uetq = window.uetq || [];
+        window.uetq.push('event', 'purchase', {
+            "event_category":"checkout",
+            "revenue_value": {{ subtotal_price | money_without_currency }},
+            "currency": '{{ shop.currency }}'
+        });
+    }
+  </script>
+  <!-- END: Bing Ads UET Code -->
+
+  <!-- BEGIN: TikTok Code -->
+  <script>
+    if(tikTokPixelId) { // Check if the tikTokPixelId is neither null nor empty
+      !function (w, d, t) {
+        w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
+        ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],
+        ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};
+        for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);
+        ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},
+        ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";
+        ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};
+        var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;
+        var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
+        ttq.load(tikTokPixelId); // Use the tikTokPixelId variable here
+        ttq.page();
+      }(window, document, 'ttq');
+
+      var identifyData = {};
+      if ('{{customer.id}}') identifyData.external_id = '{{customer.id}}';
+      if ('{{customer.email}}') identifyData.email = '{{customer.email}}';
+      if ('{{customer.phone}}') identifyData.phone_number = '{{customer.phone}}';      
+      ttq.identify(identifyData);
+
+      const formattedProductsForTikTok = buildItemsData().map((product) => ({ // Use buildItemsData function
+          content_id: product.product_id,
+          content_type: 'product_group',
+          content_name: product.name,
+          content_category: product.category,
+          quantity: product.quantity,
+          price: product.original_price,
+      }));
+
+      ttq.instance(tikTokPixelId).track('PlaceAnOrder', { // Dynamically use tikTokPixelId
+        contents: formattedProductsForTikTok,
+        currency: '{{ currency }}',
+        quantity: {{ checkout.item_count }},
+        value: {{ checkout.total_price | divided_by: 100.0 }},
+      }, { eventID: '{{ order_number }}_{{ order_number }}' });
+
+      ttq.instance(tikTokPixelId).track('CompletePayment', { // Dynamically use tikTokPixelId
+        contents: formattedProductsForTikTok,
+        currency: '{{ currency }}',
+        quantity: {{ checkout.item_count }},
+        value: {{ checkout.total_price | divided_by: 100.0 }},
+      }, { eventID: 'cp_{{ order_number }}_{{ order_number }}' });
+    }
+  </script>
+  <!-- END: TikTok Code -->
+
+  <!-- BEGINE: Attentive Code -->
+  <script>
+    (function() {    
+      if(attentiveId) { // Check if the attentiveId is neither null nor empty
+        // Dynamically load the dtag.js script with the Attentive ID
+        var dtagScript = document.createElement('script');
+        dtagScript.src = "https://cdn.attn.tv/" + attentiveId + "/dtag.js";
+        document.getElementsByTagName('head')[0].appendChild(dtagScript);
+    
+        setTimeout(function() {
+          // Assuming `buildItemsData` is a function that returns an array of item objects similar to `order.line_items`
+          var itemsData = buildItemsData(); // Call the buildItemsData function to get line items
+    
+          var order = {
+            "cart": {
+              "cartId": '{{ checkout.order_id }}',
+              "cartCoupon": '{{ order.discounts[0].code }}' // Ensure there's a default or conditional logic if discounts might be absent
+            },
+            "order": {
+              "orderId": '{{ checkout.order_id }}'
+            },
+            "user": {
+              "phone": '{{ customer.phone }}',
+              "email": '{{ customer.email }}'
+            },
+            "items": itemsData.map(function(item) {
+              return {
+                "productId": item.productId, // Adjust according to the structure returned by buildItemsData
+                "productVariantId": item.variantId,
+                "name": item.name,
+                "productImage": item.image,
+                "category": item.category,
+                "price": {
+                  "value": item.price,
+                  "currency": 'USD'
+                },
+                "quantity": item.quantity
+              };
+            })
+          };
+          if(window.attentive && window.attentive.analytics && window.attentive.analytics.purchase) {
+            window.attentive.analytics.purchase(order);
+          }
+        }, 1000); // Delay to ensure the dtag.js script has loaded
+      }
+    })();
+  </script>
+  <!-- END: Attentive Code -->
+
+  <!-- BEGIN: Pinterest Code -->
+  <script>  
+    if(pinterestPixel) { // Check if the pinterestPixel is neither null nor empty
+      !function(e){
+        if(!window.pintrk){
+          window.pintrk = function () {
+            window.pintrk.queue.push(Array.prototype.slice.call(arguments));
+          };
+          var n=window.pintrk;
+          n.queue=[], n.version="3.0";
+          var t=document.createElement("script");
+          t.async=!0, t.src=e;
+          var r=document.getElementsByTagName("script")[0];
+          r.parentNode.insertBefore(t,r);
+        }
+      }("https://s.pinimg.com/ct/core.js");
+  
+      if (!window.pintrk?.tagId){
+        window.pintrk('load', pinterestPixel); // Use pinterestPixel variable here
+      }
+
+      if ('{{customer.email}}') {
+        window.pintrk('set', { em: {{customer.email}} });
+      }
+      
+      window.pintrk('track', 'pagevisit');
+      
+      // Call buildItemsData function and format the products for Pinterest
+      const formattedProductsForPinterest = buildItemsData().map(product => ({
+        product_name: product.name,
+        product_id: product.product_id,
+        product_quantity: product.quantity,
+        product_price: product.price,
+        product_category: product.category,
+      }));
+  
+      pintrk('track', 'purchase', {
+        order_id: "{{checkout.order.id}}",
+        order_subtotal: {{ checkout.subtotal_price | divided_by: 100.0 }},
+        order_total: {{ checkout.total_price | divided_by: 100.0 }},
+        currency: '{{ currency }}',
+        line_items: formattedProductsForPinterest
+      });
+    }
+  </script>
+  <!-- END: Pinterest Code -->
+
+  <!-- BEGIN AddShoppers Code -->
+  <script type="text/javascript">
+    if(addShoppersPixel) { // Check if the addShoppersPixel is neither null nor empty
+        var AddShoppersWidgetOptions = {
+            'loadCss': false
+        };
+        AddShoppersConversion = {
+            order_id: "{{ order_number }}",
+            value: "{{ total_price | money_without_currency }}",
+            email: "{{ order.email }}"
+        };
+        (!function () {
+            var t = document.createElement("script");
+            t.type = "text/javascript",
+            t.async = !0,
+            t.id = "AddShoppers",
+            t.src = "https://shop.pe/widget/widget_async.js#" + addShoppersPixel, // Use the addShoppersPixel variable here
+            document
+                .getElementsByTagName("head")[0]
+                .appendChild(t)
+        }());
+        AddShoppersWidget.track_conv();
+    }
+  </script>
+  <!-- END: AddShoppers Code -->
+
+  <!-- BEGIN: Taboola Code -->
+  <script type='text/javascript'>  
+    if(taboolaPixelId) { // Check if the taboolaPixelId is neither null nor empty
+      window._tfa = window._tfa || [];
+      window._tfa.push({notify: 'event', name: 'page_view', id: taboolaPixelId});
+      !function (t, f, a, x) {
+        if (!document.getElementById(x)) {
+            t.async = 1;t.src = a;t.id=x;f.parentNode.insertBefore(t, f);
+        }
+      }(document.createElement('script'),
+      document.getElementsByTagName('script')[0],
+      '//cdn.taboola.com/libtrc/unip/' + taboolaPixelId + '/tfa.js',
+      'tb_tfa_script');
+  
+      // Push the purchase event into the _tfa array
+      _tfa.push({
+        notify: 'event', 
+        name: 'Purchase_Event', 
+        id: taboolaPixelId, 
+        revenue: {{ checkout.subtotal_price | money_without_currency }}, 
+        currency: 'USD', 
+        orderid: "{{ checkout.order_id }}", 
+        quantity: "{{ checkout.line_items | size }}"
+      });
+    }
+  </script>
+  <!-- END: Taboola Code -->
+
+  <!-- BEGIN: Criteo Code -->
+  <script type="text/javascript">
+    if(criteoPixel) {
+        // Dynamically load the Criteo script only if criteoPixel is defined and truthy
+        (function() {
+            var ldScript = document.createElement('script');
+            ldScript.type = 'text/javascript';
+            ldScript.async = true;
+            ldScript.src = '//static.criteo.net/js/ld/ld.js';
+            document.getElementsByTagName('head')[0].appendChild(ldScript);
+
+            ldScript.onload = function() {
+                var site_type = /iPad/.test(navigator.userAgent) ? "t" : /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Silk/.test(navigator.userAgent) ? "m" : "d";
+                var criteo_items = [];
+                criteo_items.push({id: "ordertotal", price: {{ order.subtotal_price | money_without_currency | remove: "," }}, quantity: 1});
+                {% for item in order.line_items %}
+                criteo_items.push({id: "{{ item.product.id }}", price: 0, quantity: 1});
+                {% endfor %}
+                
+                window.criteo_q = window.criteo_q || [];
+                window.criteo_q.push(
+                    { event: "setAccount", account: criteoPixel },
+                    { event: "setSiteType", type: site_type },
+                    { event: "setEmail", email: "{{ customer.email | remove: ' ' | strip_newlines | downcase | md5 }}" },
+                    { event: "trackTransaction", ecpplugin: "shopify", id: "{{ order.order_number }}", product: criteo_items }
+                );
+            };
+        })();
+    }
+  </script>
+  <!-- END: Criteo Code -->
+
+  <!-- BEGIN: Grin Code -->
+  <script>    
+    if(grinPixelId) { // Check if the grinPixelId is defined and not empty
+        (function() { 
+            Grin = window.Grin || (window.Grin = []); 
+            var s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.async = true;
+            // Use the grinPixelId in the script's src URL
+            s.src = 'https://' + grinPixelId + '.cloudfront.net/js/grin-sdk.js'; 
+            var x = document.getElementsByTagName('script')[0];
+            x.parentNode.insertBefore(s, x);
+    
+            s.onload = function() {
+                var order_number = '{{ order_number }}',
+                    order_name = '{{ name }}',
+                    amount = '{{ subtotal_price | money_without_currency }}',
+                    currency = 'USD';
+    
+                Grin.push(['conversion', amount, {order_number: order_number, name: order_name, currency: currency}]);
+            };
+        })();
+    }
+  </script>
+  <!-- END: Grin Code -->
+
+{% endif %}
+<!-- END: Tracking Pixels that should only fire once for first page load -->
