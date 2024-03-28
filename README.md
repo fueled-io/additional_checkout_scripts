@@ -8,4 +8,4 @@
 ## How to Use
 
 1. Update the data layer object namespace if you don't like `fueled`.
-2. In the section with the comment `BEGIN: Add Pixel Variables here`, Assign pixel variables. This will conditionally load the corresponding scripts.
+2. In the section with the comment `BEGIN: Add Pixel Variables here`, assign pixel variables. This will conditionally load the corresponding scripts.
