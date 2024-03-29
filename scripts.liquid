@@ -7,7 +7,7 @@
   var customerData = {};
 
   {% if checkout.customer.id or customer.id %}
-    customerData.customer_iD = {{ checkout.customer.id | default: customer.id | json }};
+    customerData.customer_id = {{ checkout.customer.id | default: customer.id | json }};
   {% endif %}
   {% if checkout.email or customer.email %}
     customerData.customer_email = {{ checkout.email | default: customer.email | json }};
